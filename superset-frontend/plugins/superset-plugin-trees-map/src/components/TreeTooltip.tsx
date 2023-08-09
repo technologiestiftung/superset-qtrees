@@ -50,6 +50,9 @@ export const TreeToltip: FC<TreeToltipProps> = ({
             {selectedObject.object.standortnr}
           </p>
           <p>ID: {selectedObject.object.id}</p>
+          {selectedObject.object.has_actual_sensor && (
+            <p style={{ fontWeight: 'bold' }}>Sensor verbaut</p>
+          )}
         </div>
       </div>
     </div>

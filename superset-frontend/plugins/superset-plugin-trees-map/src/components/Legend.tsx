@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { ColorCollection } from '../colors';
+import { ColorCollection } from '../hooks/useTreeColors';
 
 const white = '#fff';
 

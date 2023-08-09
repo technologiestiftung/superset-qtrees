@@ -3,10 +3,10 @@ import { ScatterplotLayer } from '@deck.gl/layers';
 import DeckGL from '@deck.gl/react';
 import React, { useEffect, useState } from 'react';
 import StaticMap from 'react-map-gl';
-import { ColorCollection } from './colors';
 import { Legend } from './components/Legend';
 import { TreeToltip } from './components/TreeTooltip';
 import { SupersetPluginTreesMapProps } from './types';
+import useTreeColors from './hooks/useTreeColors';
 
 export default function SupersetPluginTreesMap(
   props: SupersetPluginTreesMapProps,
@@ -24,6 +24,8 @@ export default function SupersetPluginTreesMap(
   const [viewState, setViewState] = useState<any>(INITIAL_VIEW_STATE);
   const [selectedObject, setSelectedObject] = useState<any>();
   const [hoveredObject, setHoveredObject] = useState<any>();
+
+  const { colorForNowcastValue } = useTreeColors();
 
   useEffect(() => {
     setSelectedObject(undefined);
@@ -62,39 +64,28 @@ export default function SupersetPluginTreesMap(
       data,
       pickable: true,
       opacity: 1,
-      stroked: false,
+      stroked: true,
       filled: true,
-      radiusMinPixels: 1,
-      radiusMaxPixels: 100,
-      lineWidthMinPixels: 1,
+      radiusMinPixels: 4,
+      radiusMaxPixels: 30,
+      lineWidthMinPixels: 0,
+      lineWidthMaxPixels: 2,
       getPosition: (d: any) => [d.lng, d.lat],
       getRadius: (d: any) => (hoveredObject === d.id ? 8 : 6),
       getFillColor: (data: any) => {
-        let returnColor = ColorCollection.unknown.color;
         const nowcast = parseInt(data.nowcast_value, 10);
-        if (nowcast && nowcast < 33) {
-          const {
-            good: { color },
-          } = ColorCollection;
-          returnColor = color;
-        } else if (nowcast && nowcast < 81) {
-          const {
-            average: { color },
-          } = ColorCollection;
-          returnColor = color;
-        } else {
-          const {
-            critical: { color },
-          } = ColorCollection;
-          returnColor = color;
-        }
-        return returnColor;
+        return colorForNowcastValue(nowcast);
+      },
+      getLineColor: (d: any) =>
+        d.has_actual_sensor ? [255, 0, 0] : [255, 255, 255, 255],
+      getLineWidth: (d: any) => {
+        console.log(d, d.has_actual_sensor);
+        return d.has_actual_sensor ? 5 : 0;
       },
       onClick: (info: any) => {
         setSelectedObject(info);
       },
       updateTriggers: {
-        getLineWidth: [hoveredObject],
         getRadius: [hoveredObject],
       },
     }),
