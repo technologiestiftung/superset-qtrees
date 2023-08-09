@@ -77,24 +77,21 @@ export default function SupersetPluginTreesMap(
         return colorForNowcastValue(nowcast);
       },
       getLineColor: (d: any) => {
-        if (hoveredObject === d.id) {
-          if (d.has_actual_sensor) {
-            return SensorColorCollection.darkColor;
-          } else {
-            const nowcast = parseInt(d.nowcast_value, 10);
-            return darkColorForNowcastValue(nowcast);
-          }
-        } else {
-          if (d.has_actual_sensor) {
-            return SensorColorCollection.color;
-          } else {
-            return [255, 255, 255, 255];
-          }
+        const isHovered = hoveredObject === d.id;
+        const hasActualSensor = d.has_actual_sensor;
+        if (hasActualSensor) {
+          return isHovered
+            ? SensorColorCollection.darkColor
+            : SensorColorCollection.color;
         }
+        const nowcast = d.nowcast_value;
+        return isHovered
+          ? darkColorForNowcastValue(nowcast)
+          : [255, 255, 255, 255];
       },
       getLineWidth: (d: any) => {
-        let width = d.has_actual_sensor ? 2 : 0;
-        let highlightedWidth = hoveredObject === d.id ? width + 5 : width;
+        const width = d.has_actual_sensor ? 2 : 0;
+        const highlightedWidth = hoveredObject === d.id ? width + 5 : width;
         return highlightedWidth;
       },
       onClick: (info: any) => {
