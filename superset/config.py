@@ -149,7 +149,7 @@ SAMPLES_ROW_LIMIT = 1000
 # default row limit for native filters
 NATIVE_FILTER_DEFAULT_ROW_LIMIT = 1000
 # max rows retrieved by filter select auto complete
-FILTER_SELECT_ROW_LIMIT = 10000
+FILTER_SELECT_ROW_LIMIT = 100000
 # default time filter in explore
 # values may be "Last day", "Last week", "<ISO date> : now", etc.
 DEFAULT_TIME_FILTER = NO_TIME_RANGE
@@ -409,7 +409,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # this enables programmers to customize certain charts (like the
     # geospatial ones) by inputting javascript in controls. This exposes
     # an XSS security vulnerability
-    "ENABLE_JAVASCRIPT_CONTROLS": False,
+    "ENABLE_JAVASCRIPT_CONTROLS": True,
     "KV_STORE": False,
     # When this feature is enabled, nested types in Presto will be
     # expanded into extra columns and/or arrays. This is experimental,
@@ -435,8 +435,8 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     "VERSIONED_EXPORT": True,  # deprecated
     "EMBEDDED_SUPERSET": False,
     # Enables Alerts and reports new implementation
-    "ALERT_REPORTS": False,
-    "DASHBOARD_RBAC": False,
+    "ALERT_REPORTS": True,
+    "DASHBOARD_RBAC": True,
     "ENABLE_EXPLORE_DRAG_AND_DROP": True,  # deprecated
     "ENABLE_ADVANCED_DATA_TYPES": False,
     # Enabling ALERTS_ATTACH_REPORTS, the system sends email and slack message
