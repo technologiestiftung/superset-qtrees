@@ -6,7 +6,7 @@ import StaticMap from 'react-map-gl';
 import { Legend } from './components/Legend';
 import { TreeToltip } from './components/TreeTooltip';
 import { SupersetPluginTreesMapProps } from './types';
-import useTreeColors from './hooks/useTreeColors';
+import useTreeColors, { SensorColorCollection } from './hooks/useTreeColors';
 
 export default function SupersetPluginTreesMap(
   props: SupersetPluginTreesMapProps,
@@ -25,7 +25,7 @@ export default function SupersetPluginTreesMap(
   const [selectedObject, setSelectedObject] = useState<any>();
   const [hoveredObject, setHoveredObject] = useState<any>();
 
-  const { colorForNowcastValue } = useTreeColors();
+  const { colorForNowcastValue, darkColorForNowcastValue } = useTreeColors();
 
   useEffect(() => {
     setSelectedObject(undefined);
@@ -69,24 +69,40 @@ export default function SupersetPluginTreesMap(
       radiusMinPixels: 4,
       radiusMaxPixels: 30,
       lineWidthMinPixels: 0,
-      lineWidthMaxPixels: 2,
+      lineWidthMaxPixels: 10,
       getPosition: (d: any) => [d.lng, d.lat],
-      getRadius: (d: any) => (hoveredObject === d.id ? 8 : 6),
+      getRadius: (d: any) => 6,
       getFillColor: (data: any) => {
         const nowcast = parseInt(data.nowcast_value, 10);
         return colorForNowcastValue(nowcast);
       },
-      getLineColor: (d: any) =>
-        d.has_actual_sensor ? [255, 0, 0] : [255, 255, 255, 255],
+      getLineColor: (d: any) => {
+        if (hoveredObject === d.id) {
+          if (d.has_actual_sensor) {
+            return SensorColorCollection.darkColor;
+          } else {
+            const nowcast = parseInt(d.nowcast_value, 10);
+            return darkColorForNowcastValue(nowcast);
+          }
+        } else {
+          if (d.has_actual_sensor) {
+            return SensorColorCollection.color;
+          } else {
+            return [255, 255, 255, 255];
+          }
+        }
+      },
       getLineWidth: (d: any) => {
-        console.log(d, d.has_actual_sensor);
-        return d.has_actual_sensor ? 5 : 0;
+        let width = d.has_actual_sensor ? 2 : 0;
+        let highlightedWidth = hoveredObject === d.id ? width + 5 : width;
+        return highlightedWidth;
       },
       onClick: (info: any) => {
         setSelectedObject(info);
       },
       updateTriggers: {
-        getRadius: [hoveredObject],
+        getLineColor: [hoveredObject],
+        getLineWidth: [hoveredObject],
       },
     }),
   ];
