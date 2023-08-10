@@ -62,9 +62,10 @@ export default function SupersetPluginTreesMap(
     });
   }, [data]);
 
-  const focusedObject = useMemo(() => {
-    return selectedObject ?? hoveredObject;
-  }, [selectedObject, hoveredObject]);
+  const focusedObject = useMemo(
+    () => selectedObject ?? hoveredObject,
+    [selectedObject, hoveredObject],
+  );
 
   const layers = [
     new ScatterplotLayer({
