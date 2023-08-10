@@ -1,7 +1,7 @@
 import { WebMercatorViewport } from '@deck.gl/core';
 import { ScatterplotLayer } from '@deck.gl/layers';
 import DeckGL from '@deck.gl/react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import StaticMap from 'react-map-gl';
 import { Legend } from './components/Legend';
 import { TreeToltip } from './components/TreeTooltip';
@@ -14,6 +14,8 @@ export default function SupersetPluginTreesMap(
   const { mapboxApiAccessKey, data, height, width } = props;
 
   const INITIAL_VIEW_STATE = {
+    width,
+    height,
     longitude: 13.39883104394256,
     latitude: 52.498574638202776,
     zoom: 13,
@@ -32,6 +34,8 @@ export default function SupersetPluginTreesMap(
   }, [viewState]);
 
   useEffect(() => {
+    if (!data || data.length === 0) return;
+
     const lats = data.map(xs => xs.lat as number);
     const lons = data.map(xs => xs.lng as number);
 
@@ -47,7 +51,7 @@ export default function SupersetPluginTreesMap(
         [minLon, minLat],
         [maxLon, maxLat],
       ],
-      { minExtent: 0.05 },
+      { minExtent: 0.05, padding: 20 },
     );
 
     setViewState({
@@ -57,6 +61,10 @@ export default function SupersetPluginTreesMap(
       zoom,
     });
   }, [data]);
+
+  const focusedObject = useMemo(() => {
+    return selectedObject ?? hoveredObject;
+  }, [selectedObject, hoveredObject]);
 
   const layers = [
     new ScatterplotLayer({
@@ -77,7 +85,7 @@ export default function SupersetPluginTreesMap(
         return colorForNowcastValue(nowcast);
       },
       getLineColor: (d: any) => {
-        const isHovered = hoveredObject === d.id;
+        const isHovered = focusedObject?.object?.id === d.id;
         const hasActualSensor = d.has_actual_sensor;
         if (hasActualSensor) {
           return isHovered
@@ -91,22 +99,23 @@ export default function SupersetPluginTreesMap(
       },
       getLineWidth: (d: any) => {
         const width = d.has_actual_sensor ? 2 : 0;
-        const highlightedWidth = hoveredObject === d.id ? width + 5 : width;
+        const highlightedWidth =
+          focusedObject?.object?.id === d.id ? width + 5 : width;
         return highlightedWidth;
       },
       onClick: (info: any) => {
         setSelectedObject(info);
       },
       updateTriggers: {
-        getLineColor: [hoveredObject],
-        getLineWidth: [hoveredObject],
+        getLineColor: [hoveredObject, selectedObject],
+        getLineWidth: [hoveredObject, selectedObject],
       },
     }),
   ];
 
-  const getTooltip = ({ object }: any) => {
-    if (object?.id) {
-      setHoveredObject(object.id);
+  const getTooltip = (info: any) => {
+    if (info?.object) {
+      setHoveredObject(info);
     } else {
       setHoveredObject(undefined);
     }
@@ -128,6 +137,7 @@ export default function SupersetPluginTreesMap(
             setViewState(viewState);
           }}
           getTooltip={getTooltip}
+          getCursor={() => (hoveredObject ? 'pointer' : 'inherit')}
         >
           <StaticMap
             preserveDrawingBuffer
@@ -135,10 +145,13 @@ export default function SupersetPluginTreesMap(
           />
         </DeckGL>
         <Legend />
-        {selectedObject && (
+        {focusedObject && (
           <TreeToltip
-            selectedObject={selectedObject}
+            selectedObject={focusedObject.object}
             setSelectedObject={setSelectedObject}
+            setHoveredObject={setHoveredObject}
+            x={focusedObject.x}
+            y={focusedObject.y}
           />
         )}
       </div>

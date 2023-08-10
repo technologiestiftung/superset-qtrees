@@ -3,6 +3,9 @@ import React, { FC } from 'react';
 interface TreeToltipProps {
   selectedObject: any;
   setSelectedObject: (obj: any) => void;
+  setHoveredObject: (obj: any) => void;
+  x: number;
+  y: number;
 }
 
 const white = '#fff';
@@ -10,15 +13,15 @@ const white = '#fff';
 export const TreeToltip: FC<TreeToltipProps> = ({
   selectedObject,
   setSelectedObject,
+  setHoveredObject,
+  x,
+  y,
 }) => (
   <>
     <div
       style={{
-        position: 'absolute',
-        left: selectedObject.x,
-        top: selectedObject.y,
         backgroundColor: white,
-        padding: '10px',
+        padding: '5px',
         width: 'auto',
         height: 'auto',
         borderRadius: '5px',
@@ -35,23 +38,29 @@ export const TreeToltip: FC<TreeToltipProps> = ({
             cursor: 'pointer',
             fontWeight: 'bold',
           }}
-          onClick={() => setSelectedObject(undefined)}
+          onClick={() => {
+            setHoveredObject(undefined);
+            setSelectedObject(undefined);
+          }}
         >
           ✕
         </div>
-        <div style={{ padding: '20px' }}>
-          <p>
-            {selectedObject.object.art_dtsch},{' '}
-            {selectedObject.object.standalter} Jahre
+        <div style={{ padding: '5px 20px 5px 5px' }}>
+          <p style={{ marginBottom: '4px' }}>
+            {selectedObject.art_dtsch}, {selectedObject.standalter} Jahre
           </p>
-          <p>Saugspannung (heute): {selectedObject.object.nowcast_value} kPa</p>
-          <p>
-            {selectedObject.object.strname} {selectedObject.object.hausnr},{' '}
-            {selectedObject.object.standortnr}
+          <p style={{ marginBottom: '4px' }}>
+            Saugspannung (heute): {selectedObject.nowcast_value} kPa
           </p>
-          <p>ID: {selectedObject.object.id}</p>
-          {selectedObject.object.has_actual_sensor && (
-            <p style={{ fontWeight: 'bold' }}>Sensor verbaut</p>
+          <p style={{ marginBottom: '4px' }}>
+            {selectedObject.strname} {selectedObject.hausnr},{' '}
+            {selectedObject.standortnr}
+          </p>
+          <p style={{ marginBottom: 0 }}>ID: {selectedObject.id}</p>
+          {selectedObject.has_actual_sensor && (
+            <p style={{ marginTop: '4px', fontWeight: 'bold' }}>
+              Sensor verbaut
+            </p>
           )}
         </div>
       </div>

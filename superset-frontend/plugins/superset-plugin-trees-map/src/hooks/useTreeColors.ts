@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 
+export const fallbackColor = [255, 255, 255];
+
 export const ColorCollection = {
   good: {
     description: 'Gut',
@@ -16,10 +18,10 @@ export const ColorCollection = {
     color: [254, 172, 118],
     darkColor: [235, 138, 74],
   },
-  unknown: {
-    description: 'Unbekannt',
-    color: [229, 231, 235],
-    darkColor: [17, 24, 39],
+  sensor: {
+    description: 'Sensor verbaut',
+    color: [255, 255, 255, 255],
+    darkColor: [255, 0, 0],
   },
 };
 
@@ -30,7 +32,7 @@ export const SensorColorCollection = {
 
 const useTreeColors = () => {
   const colorForNowcastValue = useCallback((nowcast: number) => {
-    let returnColor = ColorCollection.unknown.color;
+    let returnColor = fallbackColor;
     if (nowcast && nowcast < 33) {
       const {
         good: { color },
@@ -51,7 +53,7 @@ const useTreeColors = () => {
   }, []);
 
   const darkColorForNowcastValue = useCallback((nowcast: number) => {
-    let returnColor = ColorCollection.unknown.darkColor;
+    let returnColor = fallbackColor;
     if (nowcast && nowcast < 33) {
       const {
         good: { darkColor },
