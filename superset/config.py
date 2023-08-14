@@ -1404,7 +1404,7 @@ TALISMAN_ENABLED = utils.cast_to_boolean(os.environ.get("TALISMAN_ENABLED", True
 TALISMAN_CONFIG = {
     "content_security_policy": {
         "default-src": ["'self'"],
-        "img-src": ["'self'", "data:", "https://*.qtrees.ai"],
+        "img-src": ["'self'", "data:", "https://*.qtrees.ai", "https://logos.citylab-berlin.org"],
         "worker-src": ["'self'", "blob:"],
         "connect-src": [
             "'self'",
@@ -1412,7 +1412,7 @@ TALISMAN_CONFIG = {
             "https://events.mapbox.com",
         ],
         "object-src": "'none'",
-        "style-src": ["'self'", "'unsafe-inline'"],
+        "style-src": ["'self'", "'unsafe-inline'", "https://api.tiles.mapbox.com"],
         "script-src": ["'self'", "'strict-dynamic'", "'unsafe-eval'"],
     },
     "content_security_policy_nonce_in": ["script-src"],
