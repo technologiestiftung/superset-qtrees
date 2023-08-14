@@ -14,48 +14,35 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from superset.exceptions import SupersetException
+"""add on delete cascade for embedded dashboards
+
+Revision ID: 4448fa6deeb1
+Revises: 8ace289026f3
+Create Date: 2023-08-09 15:39:58.130228
+
+"""
+
+# revision identifiers, used by Alembic.
+revision = "4448fa6deeb1"
+down_revision = "8ace289026f3"
+
+from superset.migrations.shared.constraints import ForeignKey, redefine
+
+foreign_keys = [
+    ForeignKey(
+        table="embedded_dashboards",
+        referent_table="dashboards",
+        local_cols=["dashboard_id"],
+        remote_cols=["id"],
+    ),
+]
 
 
-class DAOException(SupersetException):
-    """
-    Base DAO exception class
-    """
+def upgrade():
+    for foreign_key in foreign_keys:
+        redefine(foreign_key, on_delete="CASCADE")
 
 
-class DAOCreateFailedError(DAOException):
-    """
-    DAO Create failed
-    """
-
-    message = "Create failed"
-
-
-class DAOUpdateFailedError(DAOException):
-    """
-    DAO Update failed
-    """
-
-    message = "Update failed"
-
-
-class DAODeleteFailedError(DAOException):
-    """
-    DAO Delete failed
-    """
-
-    message = "Delete failed"
-
-
-class DatasourceTypeNotSupportedError(DAOException):
-    """
-    DAO datasource query source type is not supported
-    """
-
-    status = 422
-    message = "DAO datasource query source type is not supported"
-
-
-class DatasourceNotFound(DAOException):
-    status = 404
-    message = "Datasource does not exist"
+def downgrade():
+    for foreign_key in foreign_keys:
+        redefine(foreign_key)
