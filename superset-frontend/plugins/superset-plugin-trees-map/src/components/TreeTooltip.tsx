@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useRef, useState } from 'react';
 import { FiClipboard } from 'react-icons/fi';
 
 interface TreeToltipProps {
@@ -7,6 +7,8 @@ interface TreeToltipProps {
   setHoveredObject: (obj: any) => void;
   x: number;
   y: number;
+  width: number;
+  height: number;
 }
 
 const white = '#fff';
@@ -17,15 +19,37 @@ export const TreeToltip: FC<TreeToltipProps> = ({
   setHoveredObject,
   x,
   y,
+  width,
+  height,
 }) => {
+  const ref = useRef<HTMLDivElement>(null);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
-  return (
-    <>
+
+  const anchor = function () {
+    if (!ref?.current) return [x + 1, y + 1];
+    const realWidth = ref.current.offsetWidth;
+    const realHeight = ref.current.offsetHeight;
+    if (x + realWidth > width) {
+      if (y + realHeight > height) {
+        return [x - realWidth - 1, y - realHeight - 1];
+      }
+      return [x - realWidth - 1, y + 1];
+    }
+    if (y + realHeight > height) {
+      return [x + 1, y - realHeight - 1];
+    }
+    return [x + 1, y + 1];
+  };
+
+  const tooltip = function (ref: React.RefObject<HTMLDivElement> | undefined) {
+    return (
       <div
+        ref={ref}
         style={{
+          zIndex: ref ? -1 : 1,
           position: 'absolute',
-          left: x + 1,
-          top: y + 1,
+          left: ref ? 1 : anchor()[0],
+          top: ref ? 1 : anchor()[1],
           backgroundColor: white,
           padding: '5px',
           width: 'auto',
@@ -100,6 +124,15 @@ export const TreeToltip: FC<TreeToltipProps> = ({
           </div>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <>
+      {/* Render behind the map, invisible -> Used for getting actual width of height of div */}
+      {tooltip(ref)}
+      {/* Actual tooltip rendered at correct position */}
+      {ref?.current && tooltip(undefined)}
     </>
   );
 };

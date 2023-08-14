@@ -153,6 +153,8 @@ export default function SupersetPluginTreesMap(
             setHoveredObject={setHoveredObject}
             x={focusedObject.x}
             y={focusedObject.y}
+            width={width}
+            height={height}
           />
         )}
       </div>
