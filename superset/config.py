@@ -143,13 +143,13 @@ BUILD_NUMBER = None
 DEFAULT_VIZ_TYPE = "table"
 
 # default row limit when requesting chart data
-ROW_LIMIT = 100000
+ROW_LIMIT = int(os.environ["ROW_LIMIT"])
 # default row limit when requesting samples from datasource in explore view
-SAMPLES_ROW_LIMIT = 100000
+SAMPLES_ROW_LIMIT = int(os.environ["SAMPLES_ROW_LIMIT"])
 # default row limit for native filters
-NATIVE_FILTER_DEFAULT_ROW_LIMIT = 100000
+NATIVE_FILTER_DEFAULT_ROW_LIMIT = int(os.environ["NATIVE_FILTER_DEFAULT_ROW_LIMIT"])
 # max rows retrieved by filter select auto complete
-FILTER_SELECT_ROW_LIMIT = 100000
+FILTER_SELECT_ROW_LIMIT = int(os.environ["FILTER_SELECT_ROW_LIMIT"])
 # default time filter in explore
 # values may be "Last day", "Last week", "<ISO date> : now", etc.
 DEFAULT_TIME_FILTER = NO_TIME_RANGE
