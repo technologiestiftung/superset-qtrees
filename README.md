@@ -11,6 +11,7 @@ This is a fork of [Superset](https://github.com/apache/superset), customized to 
   - https://superset.apache.org/docs/contributing/creating-viz-plugins/
   - https://medium.com/nmc-techblog/apache-superset-manage-custom-viz-plugins-in-production-9fde1a708e55
   - https://github.com/nielsen-oss/superset-viz-plugins/blob/master/README.md
+- Refer to the initial pull request to see which changes needed to be done to have a custom plugin: https://github.com/technologiestiftung/superset-qtrees/pull/2
 - Configuration in [./superset/config.py](./superset/config.py)
   - Row limits:
     ```
@@ -38,7 +39,7 @@ This is a fork of [Superset](https://github.com/apache/superset), customized to 
         ],
         "object-src": "'none'",
         "style-src": ["'self'", "'unsafe-inline'", "https://api.tiles.mapbox.com"],
-        "script-src": ["'self'", "'strict-dynamic'", "'unsafe-eval'"],
+        "script-src": ["'self'", "'strict-dynamic'", "'unsafe-eval'", "'unsafe-inline'"],
     },
     "content_security_policy_nonce_in": ["script-src"],
     "force_https": False,

@@ -1413,7 +1413,7 @@ TALISMAN_CONFIG = {
         ],
         "object-src": "'none'",
         "style-src": ["'self'", "'unsafe-inline'", "https://api.tiles.mapbox.com"],
-        "script-src": ["'self'", "'strict-dynamic'", "'unsafe-eval'"],
+        "script-src": ["'self'", "'strict-dynamic'", "'unsafe-eval'", "'unsafe-inline'"],
     },
     "content_security_policy_nonce_in": ["script-src"],
     "force_https": False,
