@@ -145,9 +145,9 @@ DEFAULT_VIZ_TYPE = "table"
 # default row limit when requesting chart data
 ROW_LIMIT = 100000
 # default row limit when requesting samples from datasource in explore view
-SAMPLES_ROW_LIMIT = 1000
+SAMPLES_ROW_LIMIT = 100000
 # default row limit for native filters
-NATIVE_FILTER_DEFAULT_ROW_LIMIT = 1000
+NATIVE_FILTER_DEFAULT_ROW_LIMIT = 100000
 # max rows retrieved by filter select auto complete
 FILTER_SELECT_ROW_LIMIT = 100000
 # default time filter in explore
@@ -1404,7 +1404,7 @@ TALISMAN_ENABLED = utils.cast_to_boolean(os.environ.get("TALISMAN_ENABLED", True
 TALISMAN_CONFIG = {
     "content_security_policy": {
         "default-src": ["'self'"],
-        "img-src": ["'self'", "data:", "https://*.qtrees.ai", "https://logos.citylab-berlin.org"],
+        "img-src": ["'self'", "data:", "https://*.qtrees.ai", "https://logos.citylab-berlin.org", "https://www.gravatar.com"],
         "worker-src": ["'self'", "blob:"],
         "connect-src": [
             "'self'",
