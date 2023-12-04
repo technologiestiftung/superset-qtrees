@@ -106,7 +106,7 @@ helm install my-superset superset/superset
 | initImage.tag | string | `"dockerize"` |  |
 | nameOverride | string | `nil` | Provide a name to override the name of the chart |
 | nodeSelector | object | `{}` |  |
-| postgresql | object | see `values.yaml` | Configuration values for the postgresql dependency. ref: https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md |
+| postgresql | object | see `values.yaml` | Configuration values for the postgresql dependency. ref: https://github.com/bitnami/charts/tree/main/bitnami/postgresql |
 | redis | object | see `values.yaml` | Configuration values for the Redis dependency. ref: https://github.com/bitnami/charts/blob/master/bitnami/redis More documentation can be found here: https://artifacthub.io/packages/helm/bitnami/redis |
 | resources | object | `{}` |  |
 | runAsUser | int | `0` | User ID directive. This user must have enough permissions to run the bootstrap script Running containers as root is not recommended in production. Change this to another UID - e.g. 1000 to be more secure |

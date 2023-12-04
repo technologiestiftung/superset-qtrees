@@ -203,7 +203,6 @@ class CsvToDatabaseView(CustomFormView):
                     dayfirst=form.day_first.data,
                     iterator=True,
                     keep_default_na=not form.null_values.data,
-                    mangle_dupe_cols=form.overwrite_duplicate.data,
                     usecols=form.use_cols.data if form.use_cols.data else None,
                     na_values=form.null_values.data if form.null_values.data else None,
                     nrows=form.nrows.data,
@@ -346,7 +345,6 @@ class ExcelToDatabaseView(SimpleFormView):
                 index_col=form.index_col.data,
                 io=form.excel_file.data,
                 keep_default_na=not form.null_values.data,
-                mangle_dupe_cols=form.mangle_dupe_cols.data,
                 na_values=form.null_values.data if form.null_values.data else None,
                 parse_dates=form.parse_dates.data,
                 skiprows=form.skiprows.data,
@@ -459,9 +457,10 @@ class ColumnarToDatabaseView(SimpleFormView):
         if file_type == {"zip"}:
             zipfile_ob = zipfile.ZipFile(  # pylint: disable=consider-using-with
                 form.columnar_file.data[0]
-            )  # pylint: disable=consider-using-with
+            )
             file_type = {filename.split(".")[-1] for filename in zipfile_ob.namelist()}
             files = [
+                # pylint: disable=consider-using-with
                 io.BytesIO((zipfile_ob.open(filename).read(), filename)[0])
                 for filename in zipfile_ob.namelist()
             ]

@@ -185,6 +185,12 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
     engine_aliases: set[str] = set()
     drivers: dict[str, str] = {}
     default_driver: str | None = None
+
+    # placeholder with the SQLAlchemy URI template
+    sqlalchemy_uri_placeholder = (
+        "engine+driver://user:password@host:port/dbname[?key=value&key=value...]"
+    )
+
     disable_ssh_tunneling = False
 
     _date_trunc_functions: dict[str, str] = {}
@@ -362,7 +368,7 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
 
     force_column_alias_quotes = False
     arraysize = 0
-    max_column_name_length = 0
+    max_column_name_length: int | None = None
     try_remove_schema_from_table_name = True  # pylint: disable=invalid-name
     run_multiple_statements_as_one = False
     custom_errors: dict[
@@ -1426,7 +1432,9 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         :param cursor: Cursor instance
         :return: Dictionary with different costs
         """
-        raise Exception("Database does not support cost estimation")
+        raise Exception(  # pylint: disable=broad-exception-raised
+            "Database does not support cost estimation"
+        )
 
     @classmethod
     def query_cost_formatter(
@@ -1438,7 +1446,9 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         :param raw_cost: Raw estimate from `estimate_query_cost`
         :return: Human readable cost estimate
         """
-        raise Exception("Database does not support cost estimation")
+        raise Exception(  # pylint: disable=broad-exception-raised
+            "Database does not support cost estimation"
+        )
 
     @classmethod
     def process_statement(cls, statement: str, database: Database) -> str:
@@ -1480,7 +1490,9 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
         """
         extra = database.get_extra() or {}
         if not cls.get_allow_cost_estimate(extra):
-            raise Exception("Database does not support cost estimation")
+            raise Exception(  # pylint: disable=broad-exception-raised
+                "Database does not support cost estimation"
+            )
 
         parsed_query = sql_parse.ParsedQuery(sql)
         statements = parsed_query.get_statements()
@@ -1997,11 +2009,6 @@ class BasicParametersMixin:
     # recommended driver name for the DB engine spec
     default_driver = ""
 
-    # placeholder with the SQLAlchemy URI template
-    sqlalchemy_uri_placeholder = (
-        "engine+driver://user:password@host:port/dbname[?key=value&key=value...]"
-    )
-
     # query parameter to enable encryption in the database connection
     # for Postgres this would be `{"sslmode": "verify-ca"}`, eg.
     encryption_parameters: dict[str, str] = {}
@@ -2016,7 +2023,9 @@ class BasicParametersMixin:
         query = parameters.get("query", {}).copy()
         if parameters.get("encryption"):
             if not cls.encryption_parameters:
-                raise Exception("Unable to build a URL with encryption enabled")
+                raise Exception(  # pylint: disable=broad-exception-raised
+                    "Unable to build a URL with encryption enabled"
+                )
             query.update(cls.encryption_parameters)
 
         return str(

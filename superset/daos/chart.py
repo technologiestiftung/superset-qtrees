@@ -55,18 +55,6 @@ class ChartDAO(BaseDAO[Slice]):
             raise ex
 
     @staticmethod
-    def save(slc: Slice, commit: bool = True) -> None:
-        db.session.add(slc)
-        if commit:
-            db.session.commit()
-
-    @staticmethod
-    def overwrite(slc: Slice, commit: bool = True) -> None:
-        db.session.merge(slc)
-        if commit:
-            db.session.commit()
-
-    @staticmethod
     def favorited_ids(charts: list[Slice]) -> list[FavStar]:
         ids = [chart.id for chart in charts]
         return [

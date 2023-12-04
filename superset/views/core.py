@@ -48,7 +48,6 @@ from superset.common.chart_data import ChartDataResultFormat, ChartDataResultTyp
 from superset.connectors.base.models import BaseDatasource
 from superset.connectors.sqla.models import SqlaTable
 from superset.daos.chart import ChartDAO
-from superset.daos.database import DatabaseDAO
 from superset.daos.datasource import DatasourceDAO
 from superset.dashboards.commands.importers.v0 import ImportDashboardsCommand
 from superset.dashboards.permalink.commands.get import GetDashboardPermalinkCommand
@@ -69,8 +68,9 @@ from superset.extensions import async_query_manager, cache_manager
 from superset.models.core import Database
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
-from superset.models.sql_lab import Query, TabState
+from superset.models.sql_lab import Query
 from superset.models.user_attributes import UserAttribute
+from superset.sqllab.utils import bootstrap_sqllab_data
 from superset.superset_typing import FlaskResponse
 from superset.tasks.async_queries import load_explore_json_into_cache
 from superset.utils import core as utils
@@ -115,21 +115,6 @@ SQLLAB_QUERY_COST_ESTIMATE_TIMEOUT = config["SQLLAB_QUERY_COST_ESTIMATE_TIMEOUT"
 stats_logger = config["STATS_LOGGER"]
 logger = logging.getLogger(__name__)
 
-DATABASE_KEYS = [
-    "allow_file_upload",
-    "allow_ctas",
-    "allow_cvas",
-    "allow_dml",
-    "allow_run_async",
-    "allows_subquery",
-    "backend",
-    "database_name",
-    "expose_in_sqllab",
-    "force_ctas_schema",
-    "id",
-    "disable_data_preview",
-]
-
 DATASOURCE_MISSING_ERR = __("The data source seems to have been deleted")
 USER_MISSING_ERR = __("The user seems to have been deleted")
 PARAMETER_MISSING_ERR = __(
@@ -149,13 +134,12 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
     @has_access
     @event_logger.log_this
     @expose("/slice/<int:slice_id>/")
-    def slice(self, slice_id: int) -> FlaskResponse:  # pylint: disable=no-self-use
+    def slice(self, slice_id: int) -> FlaskResponse:
         _, slc = get_form_data(slice_id, use_slice_data=True)
         if not slc:
             abort(404)
-        endpoint = "/explore/?form_data={}".format(
-            parse.quote(json.dumps({"slice_id": slice_id}))
-        )
+        form_data = parse.quote(json.dumps({"slice_id": slice_id}))
+        endpoint = f"/explore/?form_data={form_data}"
 
         is_standalone_mode = ReservedUrlParameters.is_standalone_mode()
         if is_standalone_mode:
@@ -656,7 +640,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
                 bootstrap_data, default=utils.pessimistic_json_iso_dttm_ser
             ),
             entry="explore",
-            title=title.__str__(),
+            title=title,
             standalone_mode=standalone_mode,
         )
 
@@ -696,11 +680,11 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         slc.query_context = query_context
 
         if action == "saveas" and slice_add_perm:
-            ChartDAO.save(slc)
+            ChartDAO.create(slc)
             msg = _("Chart [{}] has been saved").format(slc.slice_name)
             flash(msg, "success")
         elif action == "overwrite" and slice_overwrite_perm:
-            ChartDAO.overwrite(slc)
+            ChartDAO.update(slc)
             msg = _("Chart [{}] has been overwritten").format(slc.slice_name)
             flash(msg, "success")
 
@@ -747,7 +731,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
             )
             flash(
                 _(
-                    "Dashboard [{}] just got created and chart [{}] was added " "to it"
+                    "Dashboard [{}] just got created and chart [{}] was added to it"
                 ).format(dash.dashboard_title, slc.slice_name),
                 "success",
             )
@@ -905,7 +889,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
 
     @has_access
     @expose("/dashboard/p/<key>/", methods=("GET",))
-    def dashboard_permalink(  # pylint: disable=no-self-use
+    def dashboard_permalink(
         self,
         key: str,
     ) -> FlaskResponse:
@@ -930,7 +914,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
     @has_access
     @event_logger.log_this
     @expose("/log/", methods=("POST",))
-    def log(self) -> FlaskResponse:  # pylint: disable=no-self-use
+    def log(self) -> FlaskResponse:
         return Response(status=200)
 
     @expose("/theme/")
@@ -965,7 +949,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
         return json_success(json.dumps(sanitize_datasource_data(datasource.data)))
 
     @app.errorhandler(500)
-    def show_traceback(self) -> FlaskResponse:  # pylint: disable=no-self-use
+    def show_traceback(self) -> FlaskResponse:
         return (
             render_template("superset/traceback.html", error_msg=get_error_msg()),
             500,
@@ -1016,7 +1000,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
 
         return self.render_template(
             "superset/basic.html",
-            title=_("%(user)s's profile", user=get_username()).__str__(),
+            title=_("%(user)s's profile", user=get_username()),
             entry="profile",
             bootstrap_data=json.dumps(
                 payload, default=utils.pessimistic_json_iso_dttm_ser
@@ -1081,9 +1065,8 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
     def sqllab(self) -> FlaskResponse:
         """SQL Editor"""
         payload = {
-            "defaultDbId": config["SQLLAB_DEFAULT_DBID"],
             "common": common_bootstrap_payload(g.user),
-            **self._get_sqllab_tabs(get_user_id()),
+            **bootstrap_sqllab_data(get_user_id()),
         }
 
         if form_data := request.form.get("form_data"):

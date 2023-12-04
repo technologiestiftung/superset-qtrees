@@ -460,7 +460,7 @@ def _user_link(user: User) -> Union[Markup, str]:
     if not user:
         return ""
     url = f"/superset/profile/{user.username}/"
-    return Markup('<a href="{}">{}</a>'.format(url, escape(user) or ""))
+    return Markup(f"<a href=\"{url}\">{escape(user) or ''}</a>")
 
 
 class AuditMixinNullable(AuditMixin):
@@ -475,7 +475,7 @@ class AuditMixinNullable(AuditMixin):
     )
 
     @declared_attr
-    def created_by_fk(self) -> sa.Column:
+    def created_by_fk(self) -> sa.Column:  # pylint: disable=arguments-renamed
         return sa.Column(
             sa.Integer,
             sa.ForeignKey("ab_user.id"),
@@ -484,7 +484,7 @@ class AuditMixinNullable(AuditMixin):
         )
 
     @declared_attr
-    def changed_by_fk(self) -> sa.Column:
+    def changed_by_fk(self) -> sa.Column:  # pylint: disable=arguments-renamed
         return sa.Column(
             sa.Integer,
             sa.ForeignKey("ab_user.id"),
@@ -603,7 +603,7 @@ class ExtraJSONMixin:
         self.extra_json = json.dumps(extra)
 
     @validates("extra_json")
-    def ensure_extra_json_is_not_none(  # pylint: disable=no-self-use
+    def ensure_extra_json_is_not_none(
         self,
         _: str,
         value: Optional[dict[str, Any]],
@@ -829,7 +829,7 @@ class ExploreMixin:  # pylint: disable=too-many-public-methods
                 )
             ) from ex
 
-    def _process_sql_expression(  # pylint: disable=no-self-use
+    def _process_sql_expression(
         self,
         expression: Optional[str],
         database_id: int,

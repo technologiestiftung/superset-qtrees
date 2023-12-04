@@ -48,7 +48,7 @@ class ExternalMetadataSchema(Schema):
     table_name = fields.Str(required=True)
     normalize_columns = fields.Bool(allow_none=True)
 
-    # pylint: disable=no-self-use,unused-argument
+    # pylint: disable=unused-argument
     @post_load
     def normalize(
         self,
@@ -79,7 +79,7 @@ class SamplesPayloadSchema(Schema):
     )
 
     @pre_load
-    # pylint: disable=no-self-use, unused-argument
+    # pylint: disable=unused-argument
     def handle_none(self, data: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
         if data is None:
             return {}

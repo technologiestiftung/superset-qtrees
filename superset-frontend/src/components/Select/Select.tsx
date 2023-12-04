@@ -210,13 +210,13 @@ const Select = forwardRef(
       () =>
         !isSingleMode &&
         allowSelectAll &&
-        selectOptions.length > 0 &&
+        fullSelectOptions.length > 0 &&
         enabledOptions.length > 1 &&
         !inputValue,
       [
         isSingleMode,
         allowSelectAll,
-        selectOptions.length,
+        fullSelectOptions.length,
         enabledOptions.length,
         inputValue,
       ],

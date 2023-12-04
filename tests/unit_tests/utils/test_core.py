@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Any, Optional
 from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 
 from superset.exceptions import SupersetException
@@ -26,6 +27,7 @@ from superset.utils.core import (
     cast_to_boolean,
     check_is_safe_zip,
     is_test,
+    normalize_dttm_col,
     parse_boolean_string,
     QueryObjectFilterClause,
     remove_extra_adhoc_filters,

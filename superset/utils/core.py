@@ -117,7 +117,7 @@ TIME_COMPARISON = "__"
 
 JS_MAX_INTEGER = 9007199254740991  # Largest int Java Script can handle 2^53-1
 
-InputType = TypeVar("InputType")
+InputType = TypeVar("InputType")  # pylint: disable=invalid-name
 
 ADHOC_FILTERS_REGEX = re.compile("^adhoc_filters")
 
@@ -923,7 +923,7 @@ def send_email_smtp(  # pylint: disable=invalid-name,too-many-arguments,too-many
             msg.attach(
                 MIMEApplication(
                     f.read(),
-                    Content_Disposition="attachment; filename='%s'" % basename,
+                    Content_Disposition=f"attachment; filename='{basename}'",
                     Name=basename,
                 )
             )
@@ -932,7 +932,7 @@ def send_email_smtp(  # pylint: disable=invalid-name,too-many-arguments,too-many
     for name, body in (data or {}).items():
         msg.attach(
             MIMEApplication(
-                body, Content_Disposition="attachment; filename='%s'" % name, Name=name
+                body, Content_Disposition=f"attachment; filename='{name}'", Name=name
             )
         )
 
@@ -942,7 +942,7 @@ def send_email_smtp(  # pylint: disable=invalid-name,too-many-arguments,too-many
         formatted_time = formatdate(localtime=True)
         file_name = f"{subject} {formatted_time}"
         image = MIMEImage(imgdata, name=file_name)
-        image.add_header("Content-ID", "<%s>" % msgid)
+        image.add_header("Content-ID", f"<{msgid}>")
         image.add_header("Content-Disposition", "inline")
         msg.attach(image)
     msg_mutator = config["EMAIL_HEADER_MUTATOR"]
@@ -1143,9 +1143,9 @@ def merge_extra_filters(form_data: dict[str, Any]) -> None:
 
         def get_filter_key(f: dict[str, Any]) -> str:
             if "expressionType" in f:
-                return "{}__{}".format(f["subject"], f["operator"])
+                return f"{f['subject']}__{f['operator']}"
 
-            return "{}__{}".format(f["col"], f["op"])
+            return f"{f['col']}__{f['op']}"
 
         existing_filters = {}
         for existing in adhoc_filters:
@@ -1459,7 +1459,6 @@ def override_user(user: User | None, force: bool = True) -> Iterator[Any]:
     :param force: Whether to override the current user if set
     """
 
-    # pylint: disable=assigning-non-slot
     if hasattr(g, "user"):
         if force or g.user is None:
             current = g.user
@@ -1835,7 +1834,12 @@ def normalize_dttm_col(
                 # Column is formatted as a numeric value
                 unit = _col.timestamp_format.replace("epoch_", "")
                 df[_col.col_label] = pd.to_datetime(
-                    dttm_series, utc=False, unit=unit, origin="unix", errors="coerce"
+                    dttm_series,
+                    utc=False,
+                    unit=unit,
+                    origin="unix",
+                    errors="raise",
+                    exact=False,
                 )
             else:
                 # Column has already been formatted as a timestamp.
@@ -1845,7 +1849,8 @@ def normalize_dttm_col(
                 df[_col.col_label],
                 utc=False,
                 format=_col.timestamp_format,
-                errors="coerce",
+                errors="raise",
+                exact=False,
             )
         if _col.offset:
             df[_col.col_label] += timedelta(hours=_col.offset)
