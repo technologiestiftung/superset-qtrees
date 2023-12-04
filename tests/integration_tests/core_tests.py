@@ -46,7 +46,6 @@ from superset.db_engine_specs.mssql import MssqlEngineSpec
 from superset.exceptions import QueryObjectValidationError, SupersetException
 from superset.extensions import async_query_manager, cache_manager
 from superset.models import core as models
-from superset.models.annotations import Annotation, AnnotationLayer
 from superset.models.cache import CacheKey
 from superset.models.dashboard import Dashboard
 from superset.models.slice import Slice
@@ -444,6 +443,7 @@ class TestCore(SupersetTestCase, InsertChartMixin):
         self.get_json_resp(f"/superset/warm_up_cache?slice_id={slc.id}")
         ck = db.session.query(CacheKey).order_by(CacheKey.id.desc()).first()
         assert ck.datasource_uid == f"{slc.table.id}__table"
+        db.session.delete(ck)
         app.config["STORE_CACHE_KEYS_IN_METADATA_DB"] = store_cache_keys
 
     def test_redirect_invalid(self):
@@ -1094,6 +1094,33 @@ class TestCore(SupersetTestCase, InsertChartMixin):
 
     @mock.patch.dict(
         "superset.extensions.feature_flag_manager._feature_flags",
+        {"SQLLAB_BACKEND_PERSISTENCE": False},
+        clear=True,
+    )
+    def test_get_from_bootstrap_data_for_non_persisted_tab_state(self):
+        username = "admin"
+        self.login(username)
+        user_id = security_manager.find_user(username).id
+        # create a tab
+        data = {
+            "queryEditor": json.dumps(
+                {
+                    "title": "Untitled Query 1",
+                    "dbId": 1,
+                    "schema": None,
+                    "autorun": False,
+                    "sql": "SELECT ...",
+                    "queryLimit": 1000,
+                }
+            )
+        }
+
+        payload = views.Superset._get_sqllab_tabs(user_id=user_id)
+        self.assertEqual(len(payload["queries"]), 0)
+        self.assertEqual(len(payload["tab_state_ids"]), 0)
+
+    @mock.patch.dict(
+        "superset.extensions.feature_flag_manager._feature_flags",
         {"SQLLAB_BACKEND_PERSISTENCE": True},
         clear=True,
     )
@@ -1171,6 +1198,41 @@ class TestCore(SupersetTestCase, InsertChartMixin):
         payload = self.get_json_resp(f"/tabstateview/{tab_state_id}")
 
         self.assertEqual(payload["label"], "Untitled Query foo")
+
+    def test_tabstate_update(self):
+        username = "admin"
+        self.login(username)
+        # create a tab
+        data = {
+            "queryEditor": json.dumps(
+                {
+                    "name": "Untitled Query foo",
+                    "dbId": 1,
+                    "schema": None,
+                    "autorun": False,
+                    "sql": "SELECT ...",
+                    "queryLimit": 1000,
+                }
+            )
+        }
+        resp = self.get_json_resp("/tabstateview/", data=data)
+        tab_state_id = resp["id"]
+        # update tab state with non-existing client_id
+        client_id = "asdfasdf"
+        data = {"sql": json.dumps("select 1"), "latest_query_id": json.dumps(client_id)}
+        response = self.client.put(f"/tabstateview/{tab_state_id}", data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json["error"], "Bad request")
+        # generate query
+        db.session.add(Query(client_id=client_id, database_id=1))
+        db.session.commit()
+        # update tab state with a valid client_id
+        response = self.client.put(f"/tabstateview/{tab_state_id}", data=data)
+        self.assertEqual(response.status_code, 200)
+        # nulls should be ok too
+        data["latest_query_id"] = "null"
+        response = self.client.put(f"/tabstateview/{tab_state_id}", data=data)
+        self.assertEqual(response.status_code, 200)
 
     def test_virtual_table_explore_visibility(self):
         # test that default visibility it set to True

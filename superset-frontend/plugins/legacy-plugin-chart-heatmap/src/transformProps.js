@@ -18,6 +18,12 @@ import { getValueFormatter } from '@superset-ui/core';
  * specific language governing permissions and limitations
  * under the License.
  */
+import {
+  GenericDataType,
+  getTimeFormatter,
+  getValueFormatter,
+} from '@superset-ui/core';
+
 export default function transformProps(chartProps) {
   const { width, height, formData, queriesData, datasource } = chartProps;
   const {
@@ -38,8 +44,10 @@ export default function transformProps(chartProps) {
     yscaleInterval,
     yAxisBounds,
     yAxisFormat,
+    timeFormat,
     currencyFormat,
   } = formData;
+  const { data = [], coltypes = [] } = queriesData[0];
   const { columnFormats = {}, currencyFormats = {} } = datasource;
   const valueFormatter = getValueFormatter(
     metric,
@@ -48,10 +56,18 @@ export default function transformProps(chartProps) {
     yAxisFormat,
     currencyFormat,
   );
+  const xAxisFormatter =
+    coltypes[0] === GenericDataType.TEMPORAL
+      ? getTimeFormatter(timeFormat)
+      : String;
+  const yAxisFormatter =
+    coltypes[1] === GenericDataType.TEMPORAL
+      ? getTimeFormatter(timeFormat)
+      : String;
   return {
     width,
     height,
-    data: queriesData[0].data,
+    data,
     bottomMargin,
     canvasImageRendering,
     colorScheme: linearColorScheme,
@@ -69,5 +85,7 @@ export default function transformProps(chartProps) {
     yScaleInterval: parseInt(yscaleInterval, 10),
     yAxisBounds,
     valueFormatter,
+    xAxisFormatter,
+    yAxisFormatter,
   };
 }

@@ -16,20 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { styled } from '@superset-ui/core';
 
-// @ts-ignore
-import { QueryFormData, TimeseriesDataRecord } from '@superset-ui/core';
-
-export interface SupersetPluginTreesMapStylesProps {
-  height: number;
-  width: number;
-  mapboxApiAccessKey: string;
-}
-
-export type SupersetPluginTreesMapQueryFormData = QueryFormData &
-  SupersetPluginTreesMapStylesProps;
-
-export type SupersetPluginTreesMapProps = SupersetPluginTreesMapStylesProps & {
-  data: TimeseriesDataRecord[];
-  // add typing here for the props you pass in from transformProps.ts!
-};
+export const ControlSubSectionHeader = styled.div`
+  font-weight: ${({ theme }) => theme.typography.weights.bold};
+  font-size: ${({ theme }) => theme.typography.sizes.s};
+  margin-bottom: ${({ theme }) => theme.gridUnit}px;
+`;
+export default ControlSubSectionHeader;

@@ -759,7 +759,9 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
     @has_access_api
     @expose("/warm_up_cache/", methods=("GET",))
     @deprecated(new_target="api/v1/chart/warm_up_cache/")
-    def warm_up_cache(self) -> FlaskResponse:
+    def warm_up_cache(  # pylint: disable=no-self-use
+        self,
+    ) -> FlaskResponse:
         """Warms up the cache for the slice or table.
 
         Note for slices a force refresh occurs.
@@ -927,6 +929,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
     @deprecated(
         new_target="api/v1/database/<int:pk>/table/<path:table_name>/<schema_name>/"
     )
+    # pylint: disable=no-self-use
     def fetch_datasource_metadata(self) -> FlaskResponse:
         """
         Fetch the datasource metadata.
@@ -1003,6 +1006,52 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
                 payload, default=utils.pessimistic_json_iso_dttm_ser
             ),
         )
+
+    @staticmethod
+    def _get_sqllab_tabs(user_id: int | None) -> dict[str, Any]:
+        tabs_state: list[Any] = []
+        active_tab: Any = None
+        databases: dict[int, Any] = {}
+        for database in DatabaseDAO.find_all():
+            databases[database.id] = {
+                k: v for k, v in database.to_json().items() if k in DATABASE_KEYS
+            }
+            databases[database.id]["backend"] = database.backend
+        queries: dict[str, Any] = {}
+
+        # These are unnecessary if sqllab backend persistence is disabled
+        if is_feature_enabled("SQLLAB_BACKEND_PERSISTENCE"):
+            # send list of tab state ids
+            tabs_state = (
+                db.session.query(TabState.id, TabState.label)
+                .filter_by(user_id=user_id)
+                .all()
+            )
+            tab_state_ids = [str(tab_state[0]) for tab_state in tabs_state]
+            # return first active tab, or fallback to another one if no tab is active
+            active_tab = (
+                db.session.query(TabState)
+                .filter_by(user_id=user_id)
+                .order_by(TabState.active.desc())
+                .first()
+            )
+            # return all user queries associated with existing SQL editors
+            user_queries = (
+                db.session.query(Query)
+                .filter_by(user_id=user_id)
+                .filter(Query.sql_editor_id.in_(tab_state_ids))
+                .all()
+            )
+            queries = {
+                query.client_id: dict(query.to_dict().items()) for query in user_queries
+            }
+
+        return {
+            "tab_state_ids": tabs_state,
+            "active_tab": active_tab.to_dict() if active_tab else None,
+            "databases": databases,
+            "queries": queries,
+        }
 
     @has_access
     @event_logger.log_this

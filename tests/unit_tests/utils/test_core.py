@@ -15,14 +15,17 @@
 # specific language governing permissions and limitations
 # under the License.
 import os
+from dataclasses import dataclass
 from typing import Any, Optional
+from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
 
+from superset.exceptions import SupersetException
 from superset.utils.core import (
     cast_to_boolean,
-    DateColumn,
+    check_is_safe_zip,
     is_test,
     normalize_dttm_col,
     parse_boolean_string,
@@ -42,6 +45,12 @@ EXTRA_FILTER: QueryObjectFilterClause = {
     "val": "bar",
     "isExtra": True,
 }
+
+
+@dataclass
+class MockZipInfo:
+    file_size: int
+    compress_size: int
 
 
 @pytest.mark.parametrize(
@@ -176,28 +185,48 @@ def test_other_values():
     assert cast_to_boolean(object()) is False
 
 
-def test_normalize_dttm_col() -> None:
+def test_check_if_safe_zip_success(app_context: None) -> None:
     """
-    Tests for the ``normalize_dttm_col`` function.
-
-    In particular, this covers a regression when Pandas was upgraded from 1.5.3 to
-    2.0.3 and the behavior of ``pd.to_datetime`` changed.
+    Test if ZIP files are safe
     """
-    df = pd.DataFrame({"__time": ["2017-07-01T00:00:00.000Z"]})
-    assert (
-        df.to_markdown()
-        == """
-|    | __time                   |
-|---:|:-------------------------|
-|  0 | 2017-07-01T00:00:00.000Z |
-    """.strip()
-    )
+    ZipFile = MagicMock()
+    ZipFile.infolist.return_value = [
+        MockZipInfo(file_size=1000, compress_size=10),
+        MockZipInfo(file_size=1000, compress_size=10),
+        MockZipInfo(file_size=1000, compress_size=10),
+        MockZipInfo(file_size=1000, compress_size=10),
+        MockZipInfo(file_size=1000, compress_size=10),
+    ]
+    check_is_safe_zip(ZipFile)
 
-    # in 1.5.3 this would return a datetime64[ns] dtype, but in 2.0.3 we had to
-    # add ``exact=False`` since there is a leftover after parsing the format
-    dttm_cols = (DateColumn("__time", "%Y-%m-%d"),)
 
-    # the function modifies the dataframe in place
-    normalize_dttm_col(df, dttm_cols)
+def test_check_if_safe_zip_high_rate(app_context: None) -> None:
+    """
+    Test if ZIP files is not highly compressed
+    """
+    ZipFile = MagicMock()
+    ZipFile.infolist.return_value = [
+        MockZipInfo(file_size=1000, compress_size=1),
+        MockZipInfo(file_size=1000, compress_size=1),
+        MockZipInfo(file_size=1000, compress_size=1),
+        MockZipInfo(file_size=1000, compress_size=1),
+        MockZipInfo(file_size=1000, compress_size=1),
+    ]
+    with pytest.raises(SupersetException):
+        check_is_safe_zip(ZipFile)
 
-    assert df["__time"].astype(str).tolist() == ["2017-07-01"]
+
+def test_check_if_safe_zip_hidden_bomb(app_context: None) -> None:
+    """
+    Test if ZIP file does not contain a big file highly compressed
+    """
+    ZipFile = MagicMock()
+    ZipFile.infolist.return_value = [
+        MockZipInfo(file_size=1000, compress_size=100),
+        MockZipInfo(file_size=1000, compress_size=100),
+        MockZipInfo(file_size=1000, compress_size=100),
+        MockZipInfo(file_size=1000, compress_size=100),
+        MockZipInfo(file_size=1000 * (1024 * 1024), compress_size=100),
+    ]
+    with pytest.raises(SupersetException):
+        check_is_safe_zip(ZipFile)

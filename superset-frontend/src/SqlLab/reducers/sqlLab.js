@@ -184,6 +184,9 @@ export default function sqlLabReducer(state = {}, action) {
         if (action.query) {
           at.dataPreviewQueryId = action.query.id;
         }
+        if (existingTable.initialized) {
+          at.id = existingTable.id;
+        }
         return alterInArr(state, 'tables', existingTable, at);
       }
       // for new table, associate Id of query for data preview
@@ -421,13 +424,16 @@ export default function sqlLabReducer(state = {}, action) {
       return { ...state, activeSouthPaneTab: action.tabId };
     },
     [actions.MIGRATE_QUERY_EDITOR]() {
-      // remove migrated query editor from localStorage
-      const { sqlLab } = JSON.parse(localStorage.getItem('redux'));
-      sqlLab.queryEditors = sqlLab.queryEditors.filter(
-        qe => qe.id !== action.oldQueryEditor.id,
-      );
-      localStorage.setItem('redux', JSON.stringify({ sqlLab }));
-
+      try {
+        // remove migrated query editor from localStorage
+        const { sqlLab } = JSON.parse(localStorage.getItem('redux'));
+        sqlLab.queryEditors = sqlLab.queryEditors.filter(
+          qe => qe.id !== action.oldQueryEditor.id,
+        );
+        localStorage.setItem('redux', JSON.stringify({ sqlLab }));
+      } catch (error) {
+        // continue regardless of error
+      }
       // replace localStorage query editor with the server backed one
       return addToArr(
         removeFromArr(state, 'queryEditors', action.oldQueryEditor),
@@ -436,12 +442,16 @@ export default function sqlLabReducer(state = {}, action) {
       );
     },
     [actions.MIGRATE_TABLE]() {
-      // remove migrated table from localStorage
-      const { sqlLab } = JSON.parse(localStorage.getItem('redux'));
-      sqlLab.tables = sqlLab.tables.filter(
-        table => table.id !== action.oldTable.id,
-      );
-      localStorage.setItem('redux', JSON.stringify({ sqlLab }));
+      try {
+        // remove migrated table from localStorage
+        const { sqlLab } = JSON.parse(localStorage.getItem('redux'));
+        sqlLab.tables = sqlLab.tables.filter(
+          table => table.id !== action.oldTable.id,
+        );
+        localStorage.setItem('redux', JSON.stringify({ sqlLab }));
+      } catch (error) {
+        // continue regardless of error
+      }
 
       // replace localStorage table with the server backed one
       return addToArr(
@@ -451,12 +461,16 @@ export default function sqlLabReducer(state = {}, action) {
       );
     },
     [actions.MIGRATE_TAB_HISTORY]() {
-      // remove migrated tab from localStorage tabHistory
-      const { sqlLab } = JSON.parse(localStorage.getItem('redux'));
-      sqlLab.tabHistory = sqlLab.tabHistory.filter(
-        tabId => tabId !== action.oldId,
-      );
-      localStorage.setItem('redux', JSON.stringify({ sqlLab }));
+      try {
+        // remove migrated tab from localStorage tabHistory
+        const { sqlLab } = JSON.parse(localStorage.getItem('redux'));
+        sqlLab.tabHistory = sqlLab.tabHistory.filter(
+          tabId => tabId !== action.oldId,
+        );
+        localStorage.setItem('redux', JSON.stringify({ sqlLab }));
+      } catch (error) {
+        // continue regardless of error
+      }
       const tabHistory = state.tabHistory.filter(
         tabId => tabId !== action.oldId,
       );
@@ -624,6 +638,12 @@ export default function sqlLabReducer(state = {}, action) {
           newQueries[id] = {
             ...state.queries[id],
             ...changedQuery,
+            ...(changedQuery.startDttm && {
+              startDttm: Number(changedQuery.startDttm),
+            }),
+            ...(changedQuery.endDttm && {
+              endDttm: Number(changedQuery.endDttm),
+            }),
             // race condition:
             // because of async behavior, sql lab may still poll a couple of seconds
             // when it started fetching or finished rendering results
@@ -644,16 +664,27 @@ export default function sqlLabReducer(state = {}, action) {
     [actions.CLEAR_INACTIVE_QUERIES]() {
       const { queries } = state;
       const cleanedQueries = Object.fromEntries(
-        Object.entries(queries).filter(([, query]) => {
-          if (
-            ['running', 'pending'].includes(query.state) &&
-            Date.now() - query.startDttm > action.interval &&
-            query.progress === 0
-          ) {
-            return false;
-          }
-          return true;
-        }),
+        Object.entries(queries)
+          .filter(([, query]) => {
+            if (
+              ['running', 'pending'].includes(query.state) &&
+              Date.now() - query.startDttm > action.interval &&
+              query.progress === 0
+            ) {
+              return false;
+            }
+            return true;
+          })
+          .map(([id, query]) => [
+            id,
+            {
+              ...query,
+              state:
+                query.resultsKey && query.results?.status
+                  ? query.results.status
+                  : query.state,
+            },
+          ]),
       );
       return { ...state, queries: cleanedQueries };
     },

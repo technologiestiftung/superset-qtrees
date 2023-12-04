@@ -185,6 +185,7 @@ class Database(
         "is_managed_externally",
         "external_url",
         "encrypted_extra",
+        "impersonate_user",
     ]
     export_children = ["tables"]
 
@@ -995,7 +996,7 @@ class Log(Model):  # pylint: disable=too-few-public-methods
     user_id = Column(Integer, ForeignKey("ab_user.id"))
     dashboard_id = Column(Integer)
     slice_id = Column(Integer)
-    json = Column(Text)
+    json = Column(utils.MediumText())
     user = relationship(
         security_manager.user_model, backref="logs", foreign_keys=[user_id]
     )

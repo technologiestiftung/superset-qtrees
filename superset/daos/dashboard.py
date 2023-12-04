@@ -27,6 +27,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from superset import is_feature_enabled, security_manager
 from superset.daos.base import BaseDAO
+from superset.daos.exceptions import DAOConfigError, DAOCreateFailedError
 from superset.dashboards.commands.exceptions import (
     DashboardAccessDeniedError,
     DashboardForbiddenError,
@@ -66,8 +67,6 @@ class DashboardDAO(BaseDAO[Dashboard]):
             query = (
                 db.session.query(Dashboard)
                 .filter(id_or_slug_filter(id_or_slug))
-                .outerjoin(Slice, Dashboard.slices)
-                .outerjoin(Slice.table)
                 .outerjoin(Dashboard.owners)
                 .outerjoin(Dashboard.roles)
             )
@@ -180,15 +179,6 @@ class DashboardDAO(BaseDAO[Dashboard]):
             )
             return not db.session.query(dashboard_query.exists()).scalar()
         return True
-
-    @staticmethod
-    def update_charts_owners(model: Dashboard, commit: bool = True) -> Dashboard:
-        owners = list(model.owners)
-        for slc in model.slices:
-            slc.owners = list(set(owners) | set(slc.owners))
-        if commit:
-            db.session.commit()
-        return model
 
     @classmethod
     def delete(cls, items: Dashboard | list[Dashboard], commit: bool = True) -> None:

@@ -222,7 +222,7 @@ class ReportSchedulePostSchema(Schema):
     )
 
     @validates("custom_width")
-    def validate_custom_width(
+    def validate_custom_width(  # pylint: disable=no-self-use
         self,
         value: Optional[int],
     ) -> None:
@@ -352,7 +352,7 @@ class ReportSchedulePutSchema(Schema):
     )
 
     @validates("custom_width")
-    def validate_custom_width(
+    def validate_custom_width(  # pylint: disable=no-self-use
         self,
         value: Optional[int],
     ) -> None:

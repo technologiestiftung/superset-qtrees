@@ -71,7 +71,6 @@ setup(
     },
     install_requires=[
         "backoff>=1.8.0",
-        "cachelib>=0.4.1,<0.5",
         "celery>=5.2.2, <6.0.0",
         "click>=8.0.3",
         "click-option-group",
@@ -81,8 +80,8 @@ setup(
         "cryptography>=41.0.0, <41.0.2",
         "deprecation>=2.1.0, <2.2.0",
         "flask>=2.2.5, <3.0.0",
-        "flask-appbuilder>=4.3.4, <5.0.0",
-        "flask-caching>=1.10.1, <2.0",
+        "flask-appbuilder>=4.3.10, <5.0.0",
+        "flask-caching>=2.1.0, <3",
         "flask-compress>=1.13, <2.0",
         "flask-talisman>=1.0.0, <2.0",
         "flask-login>=0.6.0, < 1.0",
@@ -177,7 +176,7 @@ setup(
         "postgres": ["psycopg2-binary==2.9.6"],
         "presto": ["pyhive[presto]>=0.6.5"],
         "trino": ["trino>=0.324.0"],
-        "prophet": ["prophet>=1.1.0, <2.0.0"],
+        "prophet": ["prophet==1.1.1"],
         "redshift": ["sqlalchemy-redshift>=0.8.1, < 0.9"],
         "rockset": ["rockset-sqlalchemy>=0.0.1, <1.0.0"],
         "shillelagh": [

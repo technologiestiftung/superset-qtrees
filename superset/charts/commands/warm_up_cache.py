@@ -64,7 +64,7 @@ class ChartWarmUpCacheCommand(BaseCommand):
                         else get_dashboard_extra_filters(chart.id, self._dashboard_id)
                     )
 
-                g.form_data = form_data
+                g.form_data = form_data  # pylint: disable=assigning-non-slot
                 payload = get_viz(
                     datasource_type=chart.datasource.type,
                     datasource_id=chart.datasource.id,

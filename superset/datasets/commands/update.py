@@ -18,7 +18,6 @@ import logging
 from collections import Counter
 from typing import Any, Optional
 
-from flask import current_app
 from flask_appbuilder.models.sqla import Model
 from marshmallow import ValidationError
 
@@ -32,7 +31,6 @@ from superset.datasets.commands.exceptions import (
     DatasetColumnNotFoundValidationError,
     DatasetColumnsDuplicateValidationError,
     DatasetColumnsExistsValidationError,
-    DatasetEndpointUnsafeValidationError,
     DatasetExistsValidationError,
     DatasetForbiddenError,
     DatasetInvalidError,
@@ -43,7 +41,6 @@ from superset.datasets.commands.exceptions import (
     DatasetUpdateFailedError,
 )
 from superset.exceptions import SupersetSecurityException
-from superset.utils.urls import is_safe_url
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +89,10 @@ class UpdateDatasetCommand(UpdateMixin, BaseCommand):
         table_name = self._properties.get("table_name", None)
         # Validate uniqueness
         if not DatasetDAO.validate_update_uniqueness(
-            self._model.database_id, self._model_id, table_name
+            self._model.database_id,
+            self._model.schema,
+            self._model_id,
+            table_name,
         ):
             exceptions.append(DatasetExistsValidationError(table_name))
         # Validate/Populate database not allowed to change
@@ -104,15 +104,6 @@ class UpdateDatasetCommand(UpdateMixin, BaseCommand):
             self._properties["owners"] = owners
         except ValidationError as ex:
             exceptions.append(ex)
-        # Validate default URL safety
-        default_endpoint = self._properties.get("default_endpoint")
-        if (
-            default_endpoint
-            and not is_safe_url(default_endpoint)
-            and current_app.config["PREVENT_UNSAFE_DEFAULT_URLS_ON_DATASET"]
-        ):
-            exceptions.append(DatasetEndpointUnsafeValidationError())
-
         # Validate columns
         if columns := self._properties.get("columns"):
             self._validate_columns(columns, exceptions)
